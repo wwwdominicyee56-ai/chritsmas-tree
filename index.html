@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态圣诞树 🎄</title>
+    <style>
+        * {margin: 0; padding: 0; box-sizing: border-box;}
+        body {
+            padding: 15px;
+            font-family: "Consolas", "PingFang SC", monospace;
+            background: #000; /* 模拟终端黑色背景 */
+            color: #0f0; /* 绿色文字（终端风格） */
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 8px;
+            background: #111;
+            min-height: 80vh;
+            overflow-y: auto;
+        }
+        h1 {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #tree-output {
+            white-space: pre; /* 保留空格/换行，保证圣诞树形状 */
+            line-height: 1.2;
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background: #0f0;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>动态圣诞树 🎄</h1>
+        <button onclick="drawChristmasTree()">点击生成圣诞树</button>
+        <div id="tree-output"></div>
+    </div>
+
+    <script>
+        // 模拟Python的time.sleep（实现逐行动画）
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // 核心逻辑（和Python代码逻辑一致，用JS实现网页端展示）
+        async function drawChristmasTree() {
+            const treeHeight = 15; // 圣诞树高度（可改，比如改成10更矮）
+            const star = "★";       // 树顶星星
+            const leaf = "✿";       // 树叶
+            const trunk = "■";      // 树干
+            const output = document.getElementById("tree-output");
+            output.innerHTML = "";  // 清空之前的内容
+
+            // 打印树顶星星
+            const starLine = " ".repeat(treeHeight) + star;
+            output.innerHTML += starLine + "\n";
+            await sleep(100); // 等待0.1秒（动画效果）
+
+            // 打印树叶部分
+            for (let i = 0; i < treeHeight; i++) {
+                const space = " ".repeat(treeHeight - i - 1);
+                const leaves = leaf.repeat(2 * i + 1);
+                output.innerHTML += space + leaves + "\n";
+                await sleep(100);
+            }
+
+            // 打印树干
+            for (let i = 0; i < 3; i++) {
+                const space = " ".repeat(treeHeight - 2);
+                output.innerHTML += space + trunk + "\n";
+                await sleep(100);
+            }
+
+            // 打印祝福语
+            const wishLine = "\n" + " ".repeat(treeHeight - 3) + "Merry Christmas! 🎄";
+            output.innerHTML += wishLine;
+        }
+    </script>
+</body>
+</html>
