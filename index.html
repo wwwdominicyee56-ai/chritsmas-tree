@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D Particle Christmas Tree 🎄</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        body {
+            background: #000;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none; /* Disable touch zoom on mobile */
+        }
+        /* Mobile optimization */
+        @media (max-width: 768px) {
+            canvas {
+                width: 100vw;
+                height: 100vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="christmasTree"></canvas>
+
+    <script>
+        // Canvas initialization (responsive to screen size)
+        const canvas = document.getElementById('christmasTree');
+        const ctx = canvas.getContext('2d');
+
+        // Resize canvas to fit screen (mobile/PC)
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Color palette (matches video: pink/red particles + white rings)
+        const COLORS = {
+            pink: 'rgba(255, 105, 180, 0.9)',
+            red: 'rgba(255, 0, 0, 0.8)',
+            white: 'rgba(255, 255, 255, 0.9)',
+            star: 'rgba(255, 255, 200, 0.7)'
+        };
+
+        // Core variables
+        let theta = 0; // 3D rotation angle
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // 1. Starry background particles (video-style stars)
+        const starParticles = [];
+        const STAR_COUNT = 150; // Optimized for mobile performance
+        for (let i = 0; i < STAR_COUNT; i++) {
+            starParticles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 1,
+                speed: Math.random() * 0.02 + 0.01
+            });
+        }
+
+        // 2. Rotating ring particles (white rings from video)
+        const ringParticles = [];
+        const RING_RADIUS_X = canvas.width * 0.4; // Responsive to screen width
+        const RING_RADIUS_Y = canvas.height * 0.2;
+        for (let angle = 0; angle < 360; angle += 6) {
+            const rad = angle * Math.PI / 180;
+            ringParticles.push({
+                angle: angle,
+                size: 2,
+                x: centerX + Math.cos(rad) * RING_RADIUS_X,
+                y: centerY + Math.sin(rad) * RING_RADIUS_Y
+            });
+        }
+
+        // 3. Generate 3D Christmas tree particles (3D → 2D projection)
+        function createTreeParticles() {
+            const particles = [];
+            const TREE_HEIGHT = 18; // Optimized for mobile
+
+            // Tree body (3D cone structure)
+            for (let z = TREE_HEIGHT; z > 0; z--) {
+                for (let angle = 0; angle < 360; angle += 10) {
+                    const rad = angle * Math.PI / 180;
+                    // 3D coordinates
+                    const x3d = Math.cos(rad) * z * 4;
+                    const y3d = z * 2.5;
+                    const z3d = Math.sin(rad) * z * 4;
+
+                    // 3D rotation (around Y-axis)
+                    const xRot = x3d * Math.cos(theta) - z3d * Math.sin(theta);
+                    const zRot = x3d * Math.sin(theta) + z3d * Math.cos(theta);
+
+                    // Perspective projection (convert to 2D screen coords)
+                    const scale = (canvas.height * 0.8) / (zRot + canvas.height * 0.8);
+                    const x2d = centerX + xRot * scale;
+                    const y2d = centerY - y3d * scale;
+
+                    // Color gradient (pink top, red bottom)
+                    const color = z > 9 ? COLORS.pink : COLORS.red;
+                    particles.push({ x: x2d, y: y2d, size: scale * 2, color });
+                }
+            }
+
+            // Heart particles at tree top (video detail)
+            for (let i = 0; i < 30; i++) {
+                particles.push({
+                    x: centerX + (Math.random() - 0.5) * 15,
+                    y: centerY - TREE_HEIGHT * 5 + (Math.random() - 0.5) * 15,
+                    size: 2.5,
+                    color: COLORS.pink
+                });
+            }
+            return particles;
+        }
+
+        // Draw "Merry Christmas" text (matches video position)
+        function drawText() {
+            ctx.font = `bold ${canvas.width * 0.05}px Arial`; // Responsive font size
+            ctx.fillStyle = COLORS.white;
+            ctx.textAlign = 'center';
+            ctx.fillText('Merry Christmas', centerX - canvas.width * 0.2, centerY - 20);
+        }
+
+        // Main render loop (animates all elements)
+        function render() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Animate starry background
+            starParticles.forEach(star => {
+                ctx.fillStyle = COLORS.star;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                // Reset stars that fall off screen
+                star.y += star.speed;
+                if (star.y > canvas.height) star.y = 0;
+            });
+
+            // 2. Animate rotating rings
+            ringParticles.forEach(ring => {
+                ring.angle += 1;
+                const rad = ring.angle * Math.PI / 180;
+                ring.x = centerX + Math.cos(rad) * RING_RADIUS_X;
+                ring.y = centerY + Math.sin(rad) * RING_RADIUS_Y;
+                
+                ctx.fillStyle = COLORS.white;
+                ctx.beginPath();
+                ctx.arc(ring.x, ring.y, ring.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 3. Animate 3D tree particles
+            const treeParticles = createTreeParticles();
+            treeParticles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 4. Draw text
+            drawText();
+
+            // Update rotation (smooth animation)
+            theta += 0.008;
+
+            // Loop animation
+            requestAnimationFrame(render);
+        }
+
+        // Mobile touch control (swipe to rotate tree)
+        let isDragging = false;
+        let lastX = 0;
+        canvas.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            lastX = e.touches[0].clientX;
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                const deltaX = e.touches[0].clientX - lastX;
+                theta += deltaX * 0.005; // Swipe to rotate
+                lastX = e.touches[0].clientX;
+            }
+        });
+        canvas.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        // Start animation
+        render();
+    </script>
+</body>
+</html>
